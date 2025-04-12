@@ -9,6 +9,7 @@ if (argv._.length < 3) {
 	console.log("fallbackFile MUST be a .ts file");
 	console.log("Options:");
 	console.log("	-l: Enable logging in /tmp of rtmpdump/ffmpeg outputs.");
+	console.log("	-p: Enable persistent logging in /tmp of rtmpdump/ffmpeg outputs.");
 	console.log("	-t ms: Timeout in milliseconds before switching to fallback file. Defaults to 5000ms.");
 	console.log("	-d ms: Set fallback video's duration in ms. Will fallback to automatic detection if not set.");
 	process.exit(1);
@@ -16,6 +17,7 @@ if (argv._.length < 3) {
 
 const timeoutLength = (argv.t) ? argv.t : 5000;
 const loggingEnabled = (argv.l != null);
+const persistentLogging = (argv.p != null);
 
 const noDataBuf = require("fs").readFileSync(process.argv[3]);
 let noDataDur = argv.d;
@@ -40,12 +42,19 @@ const currentStream = spawn("rtmpdump", ("-m 0 -v -r " + process.argv[2]).split(
 currentStream.on("exit", (code) => { console.log("rtmpdump exited with code " + code + "+! Exiting..."); process.exit(code); });
 currentStream.stdout.on("data", (videoData) => ffmpegIn.stdin.write(videoData));
 
-if (loggingEnabled) {
-	const ffmpegOutLog = fs.createWriteStream("/tmp/ffmpegoutlog");
+if (loggingEnabled || persistentLogging) {
+	let log_extension = '.log'
+
+	if (persistentLogging) {
+		const datetime = new Date().toISOString().split('.')[0].replace('T', '_').replaceAll(':', '-');
+		log_extension = `.${datetime}${log_extension}`
+	}
+
+	const ffmpegOutLog = fs.createWriteStream(`/tmp/ffmpegout.${log_extension}`);
 	ffmpegOut.stderr.on("data", (msg) => ffmpegOutLog.write(msg));
-	const ffmpegInLog = fs.createWriteStream("/tmp/ffmpeginlog");
+	const ffmpegInLog = fs.createWriteStream(`/tmp/ffmpegin.${log_extension}`);
 	ffmpegIn.stderr.on("data", (msg) => ffmpegInLog.write(msg));
-	const rtmpdumpLog = fs.createWriteStream("/tmp/rtmpdumplog");
+	const rtmpdumpLog = fs.createWriteStream(`/tmp/rtmpdump.${log_extension}`);
 	currentStream.stderr.on("data", (msg) => rtmpdumpLog.write(msg));
 }
 
