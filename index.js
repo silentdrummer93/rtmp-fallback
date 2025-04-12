@@ -4,7 +4,7 @@ const spawn = require("child_process").spawn;
 const fs = require("fs");
 const getDuration = require("get-video-duration");
 
-if(argv._.length < 3) {
+if (argv._.length < 3) {
 	console.log("Usage: rtmp-fallback rtmpInput fallbackFile rtmpOutput");
 	console.log("fallbackFile MUST be a .ts file");
 	console.log("Options:");
@@ -19,28 +19,28 @@ const loggingEnabled = (argv.l != null);
 
 const noDataBuf = require("fs").readFileSync(process.argv[3]);
 let noDataDur = argv.d;
-if(!noDataDur)
+if (!noDataDur)
 	getDuration(process.argv[3])
-		.then((duration) => noDataDur = duration*1000)
-		.catch((e) => { 
+		.then((duration) => noDataDur = duration * 1000)
+		.catch((e) => {
 			console.error("An error occured while probing duration for fallback file!", e);
 			process.exit(1);
 		});
 let noDataTimeout = null;
 let lastNoData = null;
 
-const ffmpegOut = spawn("ffmpeg", ("-fflags +genpts -re -f mpegts -i - -c copy -bsf:a aac_adtstoasc -f flv "+process.argv[4]).split(" "));
-ffmpegOut.on("exit", (code) => { console.log("ffmpegOut exited with code "+code+"! Exiting..."); process.exit(code); });
+const ffmpegOut = spawn("ffmpeg", ("-fflags +genpts -re -f mpegts -i - -c copy -bsf:a aac_adtstoasc -f flv " + process.argv[4]).split(" "));
+ffmpegOut.on("exit", (code) => { console.log("ffmpegOut exited with code " + code + "! Exiting..."); process.exit(code); });
 
 const ffmpegIn = spawn("ffmpeg", ("-f live_flv -i - -c copy -f mpegts -").split(" "));
-ffmpegIn.on("exit", (code) => { console.log("ffmpegIn exited with code "+code+"! Exiting..."); process.exit(code); });
+ffmpegIn.on("exit", (code) => { console.log("ffmpegIn exited with code " + code + "! Exiting..."); process.exit(code); });
 ffmpegIn.stdout.on("data", onData);
 
-const currentStream = spawn("rtmpdump", ("-m 0 -v -r "+process.argv[2]).split(" "));
-currentStream.on("exit", (code) => { console.log("rtmpdump exited with code "+code+"+! Exiting..."); process.exit(code); });
+const currentStream = spawn("rtmpdump", ("-m 0 -v -r " + process.argv[2]).split(" "));
+currentStream.on("exit", (code) => { console.log("rtmpdump exited with code " + code + "+! Exiting..."); process.exit(code); });
 currentStream.stdout.on("data", (videoData) => ffmpegIn.stdin.write(videoData));
 
-if(loggingEnabled) {
+if (loggingEnabled) {
 	const ffmpegOutLog = fs.createWriteStream("/tmp/ffmpegoutlog");
 	ffmpegOut.stderr.on("data", (msg) => ffmpegOutLog.write(msg));
 	const ffmpegInLog = fs.createWriteStream("/tmp/ffmpeginlog");
@@ -51,7 +51,7 @@ if(loggingEnabled) {
 
 function onData(videoData) {
 	ffmpegOut.stdin.write(videoData);
-	if(noDataTimeout)
+	if (noDataTimeout)
 		clearTimeout(noDataTimeout);
 	noDataTimeout = setTimeout(noData, timeoutLength);
 }
