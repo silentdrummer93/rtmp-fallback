@@ -60,8 +60,10 @@ if (loggingEnabled || persistentLogging) {
 
 function onData(videoData) {
 	ffmpegOut.stdin.write(videoData);
-	if (noDataTimeout)
+	if (noDataTimeout) {
 		clearTimeout(noDataTimeout);
+		lastNoData = null
+	}
 	noDataTimeout = setTimeout(noData, timeoutLength);
 }
 
