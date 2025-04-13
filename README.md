@@ -28,7 +28,9 @@ Different bitrates and x264 presets should work; different fps may work; differe
 Usage: rtmp-fallback rtmpInput fallbackFile rtmpOutput
 fallbackFile MUST be a .ts file
 Options:
+	-f: Force start output with fallback loop.
         -l: Enable logging in /tmp of rtmpdump/ffmpeg outputs.
+	-p: Enable persistent logging in /tmp of rtmpdump/ffmpeg outputs.
         -t ms: Timeout in milliseconds before switching to fallback file. Defaults to 5000ms.
         -d ms: Set fallback video's duration in ms. Will fallback to automatic detection if not set.
 ```
