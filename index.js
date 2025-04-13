@@ -8,6 +8,7 @@ if (argv._.length < 3) {
 	console.log("Usage: rtmp-fallback rtmpInput fallbackFile rtmpOutput");
 	console.log("fallbackFile MUST be a .ts file");
 	console.log("Options:");
+	console.log("	-f: Force start output with fallback loop.");
 	console.log("	-l: Enable logging in /tmp of rtmpdump/ffmpeg outputs.");
 	console.log("	-p: Enable persistent logging in /tmp of rtmpdump/ffmpeg outputs.");
 	console.log("	-t ms: Timeout in milliseconds before switching to fallback file. Defaults to 5000ms.");
@@ -18,6 +19,7 @@ if (argv._.length < 3) {
 const timeoutLength = (argv.t) ? argv.t : 5000;
 const loggingEnabled = (argv.l != null);
 const persistentLogging = (argv.p != null);
+const forceStart = (argv.f != null);
 
 const noDataBuf = require("fs").readFileSync(process.argv[3]);
 let noDataDur = argv.d;
@@ -41,6 +43,10 @@ ffmpegIn.stdout.on("data", onData);
 const currentStream = spawn("rtmpdump", ("-m 0 -v -r " + process.argv[2]).split(" "));
 currentStream.on("exit", (code) => { console.log("rtmpdump exited with code " + code + "+! Exiting..."); process.exit(code); });
 currentStream.stdout.on("data", (videoData) => ffmpegIn.stdin.write(videoData));
+
+if (forceStart) {
+	noDataTimeout = setTimeout(noData, timeoutLength);
+}
 
 if (loggingEnabled || persistentLogging) {
 	let log_extension = '.log'
